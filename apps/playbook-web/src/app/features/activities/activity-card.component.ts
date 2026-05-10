@@ -56,7 +56,14 @@ const TAG_PALETTE = ['indigo','emerald','amber','rose','sky','violet','stone'];
       } @else {
         <span>Uncategorised</span>
       }
-      <span>{{relativeDate}}</span>
+      <div class="flex items-center gap-2">
+        @if (activity.runCount > 0) {
+          <span class="flex items-center gap-1">
+            <lucide-icon name="rocket" class="w-3 h-3"></lucide-icon> {{activity.runCount}}
+          </span>
+        }
+        <span>{{relativeDate}}</span>
+      </div>
     </div>
   </div>
 </article>
