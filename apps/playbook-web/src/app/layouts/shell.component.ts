@@ -1,10 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { Apollo, gql } from 'apollo-angular';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { ThemeService } from '../core/theme/theme.service';
+import { CommandPaletteService } from '../shared/command-palette/command-palette.service';
+import { CommandPaletteComponent } from '../shared/command-palette/command-palette.component';
 import {
   LucideAngularModule,
   BookOpen, Search, Plus, Star, Archive, Settings, LogOut, Sun, Moon,
@@ -32,7 +34,7 @@ const TAG_PALETTE = ['indigo','emerald','amber','rose','sky','violet','stone'];
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, CommandPaletteComponent],
   template: `
 <div class="h-screen flex bg-ink-100 dark:bg-ink-950 text-ink-900 dark:text-ink-100">
 
@@ -166,6 +168,12 @@ const TAG_PALETTE = ['indigo','emerald','amber','rose','sky','violet','stone'];
         </a>
       </nav>
       <div class="ml-auto flex items-center gap-2">
+        <button (click)="cmdPalette.toggle()"
+          class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-ink-200 dark:border-ink-700 text-xs text-ink-500 dark:text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+          <lucide-icon name="search" class="w-3.5 h-3.5"></lucide-icon>
+          <span>Search…</span>
+          <kbd class="font-mono text-[10px] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700">⌘K</kbd>
+        </button>
         <button (click)="theme.toggle()" class="p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
           @if (theme.theme() === 'dark') {
             <lucide-icon name="sun" class="w-4 h-4"></lucide-icon>
@@ -185,13 +193,24 @@ const TAG_PALETTE = ['indigo','emerald','amber','rose','sky','violet','stone'];
     </main>
   </div>
 </div>
+
+@if (cmdPalette.isOpen()) {
+  <app-command-palette />
+}
   `
 })
 export class ShellComponent {
-  protected readonly auth  = inject(AuthService);
-  protected readonly theme = inject(ThemeService);
-  private  readonly apollo = inject(Apollo);
-  private  readonly router = inject(Router);
+  protected readonly auth       = inject(AuthService);
+  protected readonly theme      = inject(ThemeService);
+  protected readonly cmdPalette = inject(CommandPaletteService);
+  private  readonly apollo      = inject(Apollo);
+  private  readonly router      = inject(Router);
+
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKeyDown(e: KeyboardEvent): void {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); this.cmdPalette.toggle(); }
+    if (e.key === 'Escape') this.cmdPalette.close();
+  }
 
   protected readonly catPageSize = 6;
   protected readonly showAllCats = signal(false);
