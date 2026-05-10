@@ -84,3 +84,6 @@ secrets.json
 
 # Docker
 docker-compose.override.yml
+
+# Claude Code local settings
+.claude/

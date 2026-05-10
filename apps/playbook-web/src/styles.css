@@ -1,0 +1,97 @@
+/* Fontsource — must come before any generated CSS */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/* Tailwind v3 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Tag pills ---- */
+@layer components {
+  .tag {
+    @apply inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full leading-none tracking-[0.01em];
+  }
+  .tag-indigo  { @apply bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300; }
+  .tag-emerald { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
+  .tag-amber   { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300; }
+  .tag-rose    { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300; }
+  .tag-sky     { @apply bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300; }
+  .tag-violet  { @apply bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300; }
+  .tag-stone   { @apply bg-stone-100 text-stone-600 dark:bg-stone-800/50 dark:text-stone-300; }
+}
+
+/* ---- Category gradients ---- */
+@layer utilities {
+  .gradient-indigo  { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .gradient-emerald { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); }
+  .gradient-amber   { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+  .gradient-rose    { background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%); }
+  .gradient-sky     { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); }
+  .gradient-violet  { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); }
+  .gradient-stone   { background: linear-gradient(135deg, #a8a29e 0%, #6b7280 100%); }
+  .gradient-work    { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .gradient-fitness { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); }
+  .gradient-hobbies { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+  .gradient-life    { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); }
+}
+
+/* ---- Activity card hover ---- */
+.activity-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.activity-card:hover { transform: translateY(-2px); border-color: #6366f1; box-shadow: 0 14px 30px -16px rgba(99,102,241,.35); }
+.dark .activity-card:hover { border-color: #818cf8; box-shadow: 0 14px 30px -16px rgba(129,140,248,.45); }
+
+/* ---- Sidebar scrollbar ---- */
+.sb-scroll::-webkit-scrollbar { width: 6px; }
+.sb-scroll::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 999px; }
+.dark .sb-scroll::-webkit-scrollbar-thumb { background: #44403c; }
+
+/* ---- Dotted grid background ---- */
+.dotgrid { background-image: radial-gradient(rgba(15,23,42,0.06) 1px, transparent 1px); background-size: 18px 18px; }
+.dark .dotgrid { background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); }
+
+/* ---- Auth page ---- */
+.auth-pattern {
+  background:
+    radial-gradient(1200px 600px at -10% -10%, rgba(99,102,241,0.18), transparent 60%),
+    radial-gradient(800px 600px at 120% 110%, rgba(16,185,129,0.10), transparent 60%),
+    linear-gradient(180deg, #0c0a09 0%, #1c1917 100%);
+}
+.auth-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* ---- Modal animations ---- */
+.fade-in  { animation: fadeIn .2s ease-out; }
+.scale-pop { animation: scalePop .25s cubic-bezier(.2,.7,.2,1); }
+@keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scalePop  { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* ---- Focus rings ---- */
+input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); border-color: #6366f1 !important; }
+.dark input:focus, .dark textarea:focus, .dark select:focus { box-shadow: 0 0 0 3px rgba(129,140,248,0.25); border-color: #818cf8 !important; }
+
+/* ---- No-scrollbar ---- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* ---- TipTap editor ---- */
+.tiptap-editor .ProseMirror { outline: none; min-height: 120px; padding: 0.75rem 1rem; }
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #a8a29e; pointer-events: none; float: left; height: 0; }
+
+/* ---- Toast slide-in animation ---- */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(110%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast-slide { animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }

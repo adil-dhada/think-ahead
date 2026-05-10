@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Playbook.Api/Playbook.Api.csproj" />
+    <Project Path="src/Playbook.Application/Playbook.Application.csproj" />
+    <Project Path="src/Playbook.Domain/Playbook.Domain.csproj" />
+    <Project Path="src/Playbook.Infrastructure/Playbook.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Playbook.Api.IntegrationTests/Playbook.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Playbook.Application.Tests/Playbook.Application.Tests.csproj" />
+    <Project Path="tests/Playbook.Domain.Tests/Playbook.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

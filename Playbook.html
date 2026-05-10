@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Playbook — Design</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        },
+        colors: {
+          ink: {
+            50:  '#fafaf9',
+            100: '#f5f5f4',
+            200: '#e7e5e4',
+            300: '#d6d3d1',
+            400: '#a8a29e',
+            500: '#78716c',
+            600: '#57534e',
+            700: '#44403c',
+            800: '#292524',
+            900: '#1c1917',
+            950: '#0c0a09',
+          },
+        },
+        boxShadow: {
+          'soft': '0 1px 2px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.04)',
+          'lift': '0 10px 24px -8px rgba(15, 23, 42, 0.10), 0 4px 8px -4px rgba(15,23,42,0.06)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  /* Hide scrollbar in horizontal carousels */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+
+  /* Screen frame chrome */
+  .screen-frame {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e7e5e4;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(15,23,42,0.14), 0 8px 24px -12px rgba(15,23,42,0.06);
+  }
+  .dark .screen-frame {
+    background: #0c0a09;
+    border-color: #292524;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6), 0 8px 24px -12px rgba(0,0,0,0.4);
+  }
+  /* Card hover */
+  .activity-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .activity-card:hover { transform: translateY(-2px); border-color: #6366f1; box-shadow: 0 14px 30px -16px rgba(99,102,241,.35); }
+  .dark .activity-card:hover { border-color: #818cf8; box-shadow: 0 14px 30px -16px rgba(129,140,248,.45); }
+
+  /* Tag pill colors (light/dark via CSS vars per palette) */
+  .tag { display: inline-flex; align-items: center; gap:4px; font-size:11px; font-weight:500; padding: 3px 8px; border-radius: 999px; line-height: 1; letter-spacing: 0.01em; }
+  .tag-indigo { background:#eef2ff; color:#4338ca; }
+  .tag-emerald{ background:#ecfdf5; color:#047857; }
+  .tag-amber  { background:#fffbeb; color:#b45309; }
+  .tag-rose   { background:#fff1f2; color:#be123c; }
+  .tag-sky    { background:#f0f9ff; color:#0369a1; }
+  .tag-violet { background:#f5f3ff; color:#6d28d9; }
+  .tag-stone  { background:#f5f5f4; color:#44403c; }
+  .dark .tag-indigo { background:rgba(99,102,241,.16); color:#a5b4fc; }
+  .dark .tag-emerald{ background:rgba(16,185,129,.16); color:#6ee7b7; }
+  .dark .tag-amber  { background:rgba(245,158,11,.16); color:#fcd34d; }
+  .dark .tag-rose   { background:rgba(244,63,94,.16); color:#fda4af; }
+  .dark .tag-sky    { background:rgba(14,165,233,.16); color:#7dd3fc; }
+  .dark .tag-violet { background:rgba(139,92,246,.16); color:#c4b5fd; }
+  .dark .tag-stone  { background:rgba(168,162,158,.18); color:#d6d3d1; }
+
+  /* Modal backdrop animation */
+  .fade-in { animation: fadeIn .2s ease-out; }
+  .scale-pop { animation: scalePop .25s cubic-bezier(.2,.7,.2,1); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scalePop { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+  /* Subtle dotted background pattern */
+  .dotgrid {
+    background-image: radial-gradient(rgba(15,23,42,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .dark .dotgrid {
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  }
+
+  /* Section banner */
+  .section-banner {
+    border: 1px dashed #d6d3d1;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(6px);
+  }
+  .dark .section-banner {
+    border-color: #44403c;
+    background: rgba(12,10,9,0.6);
+  }
+
+  /* Custom scroll for sidebar */
+  .sb-scroll::-webkit-scrollbar { width: 6px; }
+  .sb-scroll::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 999px; }
+  .dark .sb-scroll::-webkit-scrollbar-thumb { background: #44403c; }
+
+  /* Login illustration */
+  .auth-pattern {
+    background:
+      radial-gradient(1200px 600px at -10% -10%, rgba(99,102,241,0.18), transparent 60%),
+      radial-gradient(800px 600px at 120% 110%, rgba(16,185,129,0.10), transparent 60%),
+      linear-gradient(180deg, #0c0a09 0%, #1c1917 100%);
+  }
+  .auth-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  /* Image placeholders (gradients per category) */
+  .gradient-work    { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .gradient-fitness { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); }
+  .gradient-hobbies { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+  .gradient-life    { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); }
+
+  /* Custom checkbox-row */
+  .check-row { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:10px; transition: background .15s; }
+  .check-row:hover { background: rgba(99,102,241,0.05); }
+  .dark .check-row:hover { background: rgba(99,102,241,0.08); }
+
+  /* Avoid tailwind preflight overriding focus rings on inputs */
+  input:focus, textarea:focus, select:focus, button:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); border-color: #6366f1 !important;
+  }
+  .dark input:focus, .dark textarea:focus, .dark select:focus, .dark button:focus-visible {
+    box-shadow: 0 0 0 3px rgba(129,140,248,0.25); border-color: #818cf8 !important;
+  }
+</style>
+</head>
+<body class="bg-ink-100 dark:bg-ink-950 text-ink-900 dark:text-ink-100 antialiased">
+
+<!-- =========================================== -->
+<!-- Sticky page header for navigating screens   -->
+<!-- =========================================== -->
+<div class="sticky top-0 z-40 backdrop-blur bg-white/70 dark:bg-ink-950/70 border-b border-ink-200 dark:border-ink-800">
+  <div class="max-w-[1400px] mx-auto px-6 py-3 flex items-center gap-4">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+        <i data-lucide="book-open" class="w-4 h-4 text-white"></i>
+      </div>
+      <div class="font-semibold tracking-tight">Playbook <span class="text-ink-400 dark:text-ink-500 font-normal">— design exploration</span></div>
+    </div>
+    <nav class="hidden md:flex ml-6 gap-1 text-sm">
+      <a href="#screen-1" class="px-3 py-1.5 rounded-md text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-900">Dashboard</a>
+      <a href="#screen-2" class="px-3 py-1.5 rounded-md text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-900">List</a>
+      <a href="#screen-3" class="px-3 py-1.5 rounded-md text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-900">Detail</a>
+      <a href="#screen-4" class="px-3 py-1.5 rounded-md text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-900">Add / Edit</a>
+      <a href="#screen-5" class="px-3 py-1.5 rounded-md text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-900">Auth</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2">
+      <span class="hidden sm:flex items-center gap-1.5 mono text-[11px] text-ink-500 dark:text-ink-400 px-2 py-1 rounded-md border border-ink-200 dark:border-ink-800">
+        <i data-lucide="palette" class="w-3 h-3"></i> indigo · neutral
+      </span>
+      <button id="globalThemeToggle" class="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-ink-200 dark:border-ink-800 hover:bg-ink-100 dark:hover:bg-ink-900 transition">
+        <i data-lucide="sun" class="w-4 h-4 hidden dark:inline-block"></i>
+        <i data-lucide="moon" class="w-4 h-4 inline-block dark:hidden"></i>
+        <span class="hidden sm:inline">Toggle theme</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-[1400px] mx-auto px-4 sm:px-6 py-10 space-y-16">
+
+  <!-- ============== INTRO ============== -->
+  <section class="grid md:grid-cols-[1.2fr_1fr] gap-8 items-end">
+    <div>
+      <div class="mono text-[11px] uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400 mb-3">Playbook · v0.1 design</div>
+      <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight">Your reusable how‑to, ready when you need it.</h1>
+      <p class="mt-4 text-ink-600 dark:text-ink-400 max-w-xl text-[15px] leading-relaxed">
+        A personal knowledge base for activities you actually do — deployments, lifts, sourdough,
+        travel prep. Pull up the page, follow the playbook, get it right.
+      </p>
+    </div>
+    <div class="grid grid-cols-3 gap-3 text-sm">
+      <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-4 bg-white dark:bg-ink-900">
+        <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Type</div>
+        <div class="mt-1 font-medium">Inter · JetBrains Mono</div>
+      </div>
+      <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-4 bg-white dark:bg-ink-900">
+        <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Accent</div>
+        <div class="mt-1 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Indigo 500</div>
+      </div>
+      <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-4 bg-white dark:bg-ink-900">
+        <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Modes</div>
+        <div class="mt-1 font-medium">Light + Dark</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 1: DASHBOARD ============== -->
+  <section id="screen-1" class="space-y-4 scroll-mt-24">
+    <div class="section-banner rounded-xl px-5 py-3 flex items-center gap-3">
+      <span class="mono text-[11px] px-2 py-0.5 rounded-md bg-indigo-500 text-white">01</span>
+      <h2 class="font-semibold tracking-tight">Dashboard / Home</h2>
+      <span class="text-sm text-ink-500 dark:text-ink-400 hidden sm:inline">Greeting · stats · recently viewed · favorites · all activities</span>
+      <span class="ml-auto mono text-[11px] text-ink-500 dark:text-ink-400">1280 × 820 · desktop</span>
+    </div>
+
+    <div class="screen-frame">
+      <!-- Layout: sidebar + main -->
+      <div class="grid" style="grid-template-columns: 264px 1fr;">
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="border-r border-ink-200 dark:border-ink-800 bg-ink-50/60 dark:bg-ink-950/40 h-[820px] flex flex-col">
+          <!-- Logo -->
+          <div class="px-5 pt-5 pb-3 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+              <i data-lucide="book-open" class="w-4 h-4 text-white"></i>
+            </div>
+            <div>
+              <div class="font-semibold tracking-tight leading-none">Playbook</div>
+              <div class="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 mono">v0.1.4</div>
+            </div>
+          </div>
+
+          <!-- Search -->
+          <div class="px-4 pb-2">
+            <label class="relative block">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+              <input type="text" placeholder="Search activities…" class="w-full pl-9 pr-12 py-2 text-sm rounded-lg bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-800 placeholder-ink-400">
+              <span class="mono text-[10px] absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-ink-200 dark:border-ink-700 text-ink-500 dark:text-ink-400">⌘K</span>
+            </label>
+          </div>
+
+          <!-- New Activity -->
+          <div class="px-4 pt-2 pb-4">
+            <button class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-soft transition" onclick="openModal()">
+              <i data-lucide="plus" class="w-4 h-4"></i> New activity
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <!-- Categories -->
+            <div class="px-4 pt-2 pb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400">Categories</div>
+                <button class="text-ink-400 hover:text-ink-600 dark:hover:text-ink-200"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span><span class="flex-1">Work</span><span class="mono text-[11px] text-ink-400">14</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="flex-1">Fitness</span><span class="mono text-[11px] text-ink-400">9</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="flex-1">Hobbies</span><span class="mono text-[11px] text-ink-400">11</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span><span class="flex-1">Life Admin</span><span class="mono text-[11px] text-ink-400">7</span></a></li>
+              </ul>
+            </div>
+
+            <!-- Tags -->
+            <div class="px-4 pt-3 pb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400">Tags</div>
+                <span class="mono text-[10px] text-ink-400">23</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto sb-scroll pr-1">
+                <span class="tag tag-indigo">#deployment</span>
+                <span class="tag tag-emerald">#upper-body</span>
+                <span class="tag tag-amber">#weekly</span>
+                <span class="tag tag-rose">#review</span>
+                <span class="tag tag-violet">#strength</span>
+                <span class="tag tag-sky">#travel</span>
+                <span class="tag tag-stone">#cooking</span>
+                <span class="tag tag-indigo">#engineering</span>
+                <span class="tag tag-amber">#fermentation</span>
+                <span class="tag tag-emerald">#endurance</span>
+                <span class="tag tag-rose">#taxes</span>
+              </div>
+            </div>
+
+            <!-- Quick access -->
+            <div class="px-4 pt-3 pb-4">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Quick access</div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="star" class="w-3.5 h-3.5 text-amber-500 fill-amber-500"></i> Favorites <span class="ml-auto mono text-[11px] text-ink-400">6</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="clock" class="w-3.5 h-3.5 text-ink-400"></i> Recently viewed</a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="archive" class="w-3.5 h-3.5 text-ink-400"></i> Archive</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- User -->
+          <div class="border-t border-ink-200 dark:border-ink-800 p-3 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium leading-tight truncate">Mara Bishop</div>
+              <div class="text-[11px] text-ink-500 dark:text-ink-400 truncate"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a5c8c4d7c4e5d6d1d0c1ccca8bd1c0c4c8">[email&#160;protected]</a></div>
+            </div>
+            <button class="text-ink-400 hover:text-ink-700 dark:hover:text-ink-200"><i data-lucide="settings" class="w-4 h-4"></i></button>
+          </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="h-[820px] flex flex-col">
+          <!-- Top bar -->
+          <div class="h-14 px-6 flex items-center gap-3 border-b border-ink-200 dark:border-ink-800">
+            <div class="flex items-center gap-2 text-sm text-ink-500 dark:text-ink-400">
+              <i data-lucide="home" class="w-3.5 h-3.5"></i>
+              <span class="text-ink-900 dark:text-ink-100 font-medium">Home</span>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <button class="text-sm flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
+                <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i> Recent <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+              </button>
+              <button class="screen-theme-toggle p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:inline-block"></i>
+                <i data-lucide="moon" class="w-4 h-4 inline-block dark:hidden"></i>
+              </button>
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            </div>
+          </div>
+
+          <!-- Scroll body -->
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <div class="px-8 py-7 space-y-9">
+              <!-- Greeting -->
+              <div class="flex items-end justify-between gap-6 flex-wrap">
+                <div>
+                  <div class="text-[13px] mono text-ink-500 dark:text-ink-400">Friday, May 9 · 8:42 AM</div>
+                  <h1 class="mt-1 text-3xl font-semibold tracking-tight">Good morning, Mara.</h1>
+                  <p class="mt-1.5 text-ink-500 dark:text-ink-400 text-sm">You have <span class="text-indigo-600 dark:text-indigo-400 font-medium">2 deploys</span> on the calendar today. Got your playbooks?</p>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="px-4 py-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 min-w-[120px]">
+                    <div class="mono text-[10px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Total</div>
+                    <div class="mt-1 text-xl font-semibold">41</div>
+                  </div>
+                  <div class="px-4 py-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 min-w-[120px]">
+                    <div class="mono text-[10px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Top category</div>
+                    <div class="mt-1 text-xl font-semibold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Work</div>
+                  </div>
+                  <div class="px-4 py-3 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 min-w-[120px]">
+                    <div class="mono text-[10px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Added (7d)</div>
+                    <div class="mt-1 text-xl font-semibold flex items-baseline gap-1.5">+3 <span class="text-[11px] text-emerald-600 dark:text-emerald-400 mono">↑12%</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recently viewed -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold tracking-tight">Recently viewed</h3>
+                  <a class="text-[13px] text-ink-500 dark:text-ink-400 hover:text-indigo-600">View all →</a>
+                </div>
+                <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
+                  <!-- Compact recent cards -->
+                  <div class="recent-card activity-card shrink-0 w-[260px] rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-20 gradient-work flex items-end p-3"><i data-lucide="rocket" class="w-5 h-5 text-white/90"></i></div>
+                    <div class="p-3.5">
+                      <div class="font-medium text-[14px] truncate">Production Deployment Checklist</div>
+                      <div class="mt-0.5 text-[12px] text-ink-500 dark:text-ink-400">Work · viewed 2h ago</div>
+                    </div>
+                  </div>
+                  <div class="recent-card activity-card shrink-0 w-[260px] rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-20 gradient-fitness flex items-end p-3"><i data-lucide="dumbbell" class="w-5 h-5 text-white/90"></i></div>
+                    <div class="p-3.5">
+                      <div class="font-medium text-[14px] truncate">Upper Body Push Day</div>
+                      <div class="mt-0.5 text-[12px] text-ink-500 dark:text-ink-400">Fitness · viewed yesterday</div>
+                    </div>
+                  </div>
+                  <div class="recent-card activity-card shrink-0 w-[260px] rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-20 gradient-hobbies flex items-end p-3"><i data-lucide="croissant" class="w-5 h-5 text-white/90"></i></div>
+                    <div class="p-3.5">
+                      <div class="font-medium text-[14px] truncate">Sourdough Starter Maintenance</div>
+                      <div class="mt-0.5 text-[12px] text-ink-500 dark:text-ink-400">Hobbies · viewed 3d ago</div>
+                    </div>
+                  </div>
+                  <div class="recent-card activity-card shrink-0 w-[260px] rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-20 gradient-life flex items-end p-3"><i data-lucide="plane" class="w-5 h-5 text-white/90"></i></div>
+                    <div class="p-3.5">
+                      <div class="font-medium text-[14px] truncate">International Travel Prep</div>
+                      <div class="mt-0.5 text-[12px] text-ink-500 dark:text-ink-400">Life Admin · viewed 5d ago</div>
+                    </div>
+                  </div>
+                  <div class="recent-card activity-card shrink-0 w-[260px] rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-20 gradient-work flex items-end p-3"><i data-lucide="git-pull-request" class="w-5 h-5 text-white/90"></i></div>
+                    <div class="p-3.5">
+                      <div class="font-medium text-[14px] truncate">Code Review Protocol</div>
+                      <div class="mt-0.5 text-[12px] text-ink-500 dark:text-ink-400">Work · viewed 6d ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Favorites grid -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold tracking-tight flex items-center gap-2"><i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i> Favorites</h3>
+                  <span class="mono text-[11px] text-ink-500 dark:text-ink-400">6 starred</span>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                  <!-- Favorite cards -->
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-24 gradient-work flex items-start justify-between p-3">
+                      <i data-lucide="rocket" class="w-5 h-5 text-white/90"></i>
+                      <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                    </div>
+                    <div class="p-4">
+                      <div class="font-semibold text-[15px] leading-snug">Production Deployment Checklist</div>
+                      <p class="mt-1 text-[13px] text-ink-500 dark:text-ink-400 line-clamp-2">Pre‑flight, smoke tests, observability checks, and the rollback plan that has saved our weekend twice.</p>
+                      <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                        <span class="tag tag-indigo">#deployment</span>
+                        <span class="tag tag-stone">#release</span>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                        <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Work</span>
+                        <span class="mono">Updated 2d</span>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-24 gradient-fitness flex items-start justify-between p-3">
+                      <i data-lucide="dumbbell" class="w-5 h-5 text-white/90"></i>
+                      <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                    </div>
+                    <div class="p-4">
+                      <div class="font-semibold text-[15px] leading-snug">Upper Body Push Day</div>
+                      <p class="mt-1 text-[13px] text-ink-500 dark:text-ink-400 line-clamp-2">Bench, OHP, dips, lateral raises. Warm‑up and rest timing notes from the last cycle.</p>
+                      <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                        <span class="tag tag-emerald">#upper-body</span>
+                        <span class="tag tag-violet">#strength</span>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                        <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fitness</span>
+                        <span class="mono">Updated 5d</span>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                    <div class="h-24 gradient-hobbies flex items-start justify-between p-3">
+                      <i data-lucide="croissant" class="w-5 h-5 text-white/90"></i>
+                      <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                    </div>
+                    <div class="p-4">
+                      <div class="font-semibold text-[15px] leading-snug">Sourdough Starter Maintenance</div>
+                      <p class="mt-1 text-[13px] text-ink-500 dark:text-ink-400 line-clamp-2">Feed ratios, temperature targets, and how to revive Henrietta after a vacation.</p>
+                      <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                        <span class="tag tag-amber">#weekly</span>
+                        <span class="tag tag-rose">#fermentation</span>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                        <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Hobbies</span>
+                        <span class="mono">Updated 1w</span>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <!-- All activities preview -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold tracking-tight">All activities</h3>
+                  <a href="#screen-2" class="text-[13px] text-ink-500 dark:text-ink-400 hover:text-indigo-600">Open list →</a>
+                </div>
+                <div class="grid grid-cols-4 gap-4">
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-4">
+                    <div class="flex items-center justify-between">
+                      <div class="w-9 h-9 rounded-lg gradient-life grid place-items-center"><i data-lucide="receipt" class="w-4 h-4 text-white"></i></div>
+                      <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                    </div>
+                    <div class="mt-3 font-semibold text-[14px] leading-snug">Quarterly Tax Filing</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">1099s, mileage log, contractor receipts. Avoid the April scramble.</p>
+                    <div class="mt-3 flex items-center justify-between text-[11.5px] text-ink-500 dark:text-ink-400 mono">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Life Admin</span>
+                      <span>14d</span>
+                    </div>
+                  </article>
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-4">
+                    <div class="flex items-center justify-between">
+                      <div class="w-9 h-9 rounded-lg gradient-work grid place-items-center"><i data-lucide="users" class="w-4 h-4 text-white"></i></div>
+                      <i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i>
+                    </div>
+                    <div class="mt-3 font-semibold text-[14px] leading-snug">Onboarding New Engineer</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Day 1 access list, intro doc tour, and the buddy lunch convention.</p>
+                    <div class="mt-3 flex items-center justify-between text-[11.5px] text-ink-500 dark:text-ink-400 mono">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Work</span>
+                      <span>3d</span>
+                    </div>
+                  </article>
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-4">
+                    <div class="flex items-center justify-between">
+                      <div class="w-9 h-9 rounded-lg gradient-fitness grid place-items-center"><i data-lucide="footprints" class="w-4 h-4 text-white"></i></div>
+                      <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                    </div>
+                    <div class="mt-3 font-semibold text-[14px] leading-snug">Long Run Training</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Pacing, fueling, hydration. The 16‑miler that finally clicked.</p>
+                    <div class="mt-3 flex items-center justify-between text-[11.5px] text-ink-500 dark:text-ink-400 mono">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fitness</span>
+                      <span>6d</span>
+                    </div>
+                  </article>
+                  <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-4">
+                    <div class="flex items-center justify-between">
+                      <div class="w-9 h-9 rounded-lg gradient-hobbies grid place-items-center"><i data-lucide="coffee" class="w-4 h-4 text-white"></i></div>
+                      <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                    </div>
+                    <div class="mt-3 font-semibold text-[14px] leading-snug">Espresso Machine Cleaning</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Backflush, group head, gasket check. The Sunday ritual.</p>
+                    <div class="mt-3 flex items-center justify-between text-[11.5px] text-ink-500 dark:text-ink-400 mono">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Hobbies</span>
+                      <span>9d</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 2: ACTIVITY LIST ============== -->
+  <section id="screen-2" class="space-y-4 scroll-mt-24">
+    <div class="section-banner rounded-xl px-5 py-3 flex items-center gap-3">
+      <span class="mono text-[11px] px-2 py-0.5 rounded-md bg-indigo-500 text-white">02</span>
+      <h2 class="font-semibold tracking-tight">Activity list view</h2>
+      <span class="text-sm text-ink-500 dark:text-ink-400 hidden sm:inline">Filter chips · 4‑column grid · 9 sample cards across categories</span>
+      <span class="ml-auto mono text-[11px] text-ink-500 dark:text-ink-400">1280 × 920 · desktop</span>
+    </div>
+
+    <div class="screen-frame">
+      <div class="grid" style="grid-template-columns: 264px 1fr;">
+        <!-- Compact sidebar (re-use pattern) -->
+        <aside class="border-r border-ink-200 dark:border-ink-800 bg-ink-50/60 dark:bg-ink-950/40 h-[920px] flex flex-col">
+          <div class="px-5 pt-5 pb-3 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+              <i data-lucide="book-open" class="w-4 h-4 text-white"></i>
+            </div>
+            <div class="font-semibold tracking-tight">Playbook</div>
+          </div>
+          <div class="px-4 pb-2">
+            <label class="relative block">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+              <input type="text" placeholder="Search activities…" class="w-full pl-9 pr-12 py-2 text-sm rounded-lg bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-800 placeholder-ink-400">
+              <span class="mono text-[10px] absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-ink-200 dark:border-ink-700 text-ink-500 dark:text-ink-400">⌘K</span>
+            </label>
+          </div>
+          <div class="px-4 pt-2 pb-4">
+            <button class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-soft transition" onclick="openModal()">
+              <i data-lucide="plus" class="w-4 h-4"></i> New activity
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <div class="px-4 pt-2 pb-2">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Categories</div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span><span class="flex-1">Work</span><span class="mono text-[11px]">14</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="flex-1">Fitness</span><span class="mono text-[11px] text-ink-400">9</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="flex-1">Hobbies</span><span class="mono text-[11px] text-ink-400">11</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span><span class="flex-1">Life Admin</span><span class="mono text-[11px] text-ink-400">7</span></a></li>
+              </ul>
+            </div>
+            <div class="px-4 pt-3 pb-2">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Tags</div>
+              <div class="flex flex-wrap gap-1.5 pr-1" id="tagFilterCloud">
+                <button data-tag="#deployment" class="tag tag-indigo ring-2 ring-indigo-400/60">#deployment</button>
+                <button data-tag="#weekly" class="tag tag-amber">#weekly</button>
+                <button data-tag="#review" class="tag tag-rose">#review</button>
+                <button data-tag="#engineering" class="tag tag-indigo">#engineering</button>
+                <button data-tag="#strength" class="tag tag-violet">#strength</button>
+                <button data-tag="#travel" class="tag tag-sky">#travel</button>
+                <button data-tag="#cooking" class="tag tag-stone">#cooking</button>
+              </div>
+            </div>
+            <div class="px-4 pt-3 pb-4">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Quick access</div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="star" class="w-3.5 h-3.5 text-amber-500 fill-amber-500"></i> Favorites</a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="clock" class="w-3.5 h-3.5 text-ink-400"></i> Recently viewed</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="border-t border-ink-200 dark:border-ink-800 p-3 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium leading-tight truncate">Mara Bishop</div>
+              <div class="text-[11px] text-ink-500 dark:text-ink-400 truncate"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="94f9f5e6f5d4e7e0e1f0fdfbbae0f1f5f9">[email&#160;protected]</a></div>
+            </div>
+            <button class="text-ink-400 hover:text-ink-700 dark:hover:text-ink-200"><i data-lucide="settings" class="w-4 h-4"></i></button>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="h-[920px] flex flex-col">
+          <div class="h-14 px-6 flex items-center gap-3 border-b border-ink-200 dark:border-ink-800">
+            <div class="flex items-center gap-2 text-sm">
+              <a class="text-ink-500 dark:text-ink-400 hover:text-indigo-600">Home</a>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-ink-400"></i>
+              <span class="font-medium">Work</span>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <button class="text-sm flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
+                <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i> Most used <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+              </button>
+              <button class="screen-theme-toggle p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:inline-block"></i>
+                <i data-lucide="moon" class="w-4 h-4 inline-block dark:hidden"></i>
+              </button>
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <div class="px-8 py-7 space-y-6">
+              <div>
+                <h1 class="text-2xl font-semibold tracking-tight">Work</h1>
+                <p class="text-sm text-ink-500 dark:text-ink-400 mt-1">14 activities · last touched 2 hours ago</p>
+              </div>
+
+              <!-- Filter chips -->
+              <div id="filterChipsRow" class="flex items-center gap-2 flex-wrap">
+                <span class="text-[12px] mono text-ink-500 dark:text-ink-400 uppercase tracking-wider">Filters</span>
+                <button class="filter-chip group flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-400/20" data-chip="cat">
+                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Work
+                  <i data-lucide="x" class="w-3 h-3 opacity-60 group-hover:opacity-100"></i>
+                </button>
+                <button class="filter-chip group flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-400/20" data-chip="tag">
+                  #deployment <i data-lucide="x" class="w-3 h-3 opacity-60 group-hover:opacity-100"></i>
+                </button>
+                <button id="clearFiltersBtn" class="text-[12px] text-ink-500 dark:text-ink-400 hover:text-indigo-600 ml-1">Clear all</button>
+              </div>
+
+              <!-- Card grid -->
+              <div class="grid grid-cols-4 gap-4" id="listGrid">
+                <!-- 9 cards -->
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-work flex items-start justify-between p-3">
+                    <i data-lucide="rocket" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Production Deployment Checklist</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Pre‑flight, smoke tests, observability checks, and the rollback plan that has saved our weekend twice.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-indigo">#deployment</span><span class="tag tag-stone">#release</span><span class="tag tag-amber">#weekly</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Work</span>
+                      <span class="mono">2d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-work flex items-start justify-between p-3">
+                    <i data-lucide="git-pull-request" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Code Review Protocol</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">How we read diffs without nitpicking — context first, surface‑area second, style last.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-rose">#review</span><span class="tag tag-indigo">#engineering</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Work</span>
+                      <span class="mono">6d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-fitness flex items-start justify-between p-3">
+                    <i data-lucide="dumbbell" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Upper Body Push Day</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Bench, OHP, dips, lateral raises. Warm‑up flow and rest timing from the last cycle.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-emerald">#upper-body</span><span class="tag tag-violet">#strength</span><span class="tag tag-stone">+2</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fitness</span>
+                      <span class="mono">5d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-fitness flex items-start justify-between p-3">
+                    <i data-lucide="footprints" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Long Run Training</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Pacing, fueling, hydration. The 16‑miler that finally clicked, with bail‑out points.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-emerald">#endurance</span><span class="tag tag-stone">#running</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Fitness</span>
+                      <span class="mono">6d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-hobbies flex items-start justify-between p-3">
+                    <i data-lucide="croissant" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Sourdough Starter Maintenance</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Feed ratios, temperature targets, and how to revive Henrietta after a vacation.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-amber">#weekly</span><span class="tag tag-rose">#fermentation</span><span class="tag tag-stone">#baking</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Hobbies</span>
+                      <span class="mono">1w ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-hobbies flex items-start justify-between p-3">
+                    <i data-lucide="leaf" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Garden Bed Spring Setup</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Soil amendments, planting order, irrigation check. Last‑frost calculus.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-emerald">#gardening</span><span class="tag tag-stone">#spring</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Hobbies</span>
+                      <span class="mono">12d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-life flex items-start justify-between p-3">
+                    <i data-lucide="plane" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-white fill-white"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">International Travel Prep</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Passport window, vaccinations, currency, plug adapters, T‑Mobile vs Airalo.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-sky">#travel</span><span class="tag tag-stone">#passport</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Life Admin</span>
+                      <span class="mono">5d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-life flex items-start justify-between p-3">
+                    <i data-lucide="receipt" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Quarterly Tax Filing</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">1099s, mileage log, contractor receipts. Avoid the April scramble.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-rose">#taxes</span><span class="tag tag-amber">#quarterly</span><span class="tag tag-stone">#finance</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Life Admin</span>
+                      <span class="mono">14d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden">
+                  <div class="h-24 gradient-life flex items-start justify-between p-3">
+                    <i data-lucide="utensils" class="w-5 h-5 text-white/90"></i>
+                    <i data-lucide="star" class="w-4 h-4 text-ink-300 dark:text-ink-700"></i>
+                  </div>
+                  <div class="p-4">
+                    <div class="font-semibold text-[14.5px] leading-snug">Weekly Meal Prep</div>
+                    <p class="mt-1 text-[12.5px] text-ink-500 dark:text-ink-400 line-clamp-2">Sunday cook session: grain, protein, two sauces, vegetables in three textures.</p>
+                    <div class="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-stone">#cooking</span><span class="tag tag-amber">#weekly</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-ink-100 dark:border-ink-800 flex items-center justify-between text-[12px] text-ink-500 dark:text-ink-400">
+                      <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Life Admin</span>
+                      <span class="mono">3d ago</span>
+                    </div>
+                  </div>
+                </article>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 3: ACTIVITY DETAIL ============== -->
+  <section id="screen-3" class="space-y-4 scroll-mt-24">
+    <div class="section-banner rounded-xl px-5 py-3 flex items-center gap-3">
+      <span class="mono text-[11px] px-2 py-0.5 rounded-md bg-indigo-500 text-white">03</span>
+      <h2 class="font-semibold tracking-tight">Activity detail page</h2>
+      <span class="text-sm text-ink-500 dark:text-ink-400 hidden sm:inline">Two-column do's / don'ts · notes · attachments · metadata rail</span>
+      <span class="ml-auto mono text-[11px] text-ink-500 dark:text-ink-400">1280 × 1080 · desktop</span>
+    </div>
+
+    <div class="screen-frame">
+      <div class="grid" style="grid-template-columns: 264px 1fr;">
+        <!-- Sidebar (compact) -->
+        <aside class="border-r border-ink-200 dark:border-ink-800 bg-ink-50/60 dark:bg-ink-950/40 h-[1080px] flex flex-col">
+          <div class="px-5 pt-5 pb-3 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+              <i data-lucide="book-open" class="w-4 h-4 text-white"></i>
+            </div>
+            <div class="font-semibold tracking-tight">Playbook</div>
+          </div>
+          <div class="px-4 pb-2">
+            <label class="relative block">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+              <input type="text" placeholder="Search activities…" class="w-full pl-9 pr-12 py-2 text-sm rounded-lg bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-800 placeholder-ink-400">
+              <span class="mono text-[10px] absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-ink-200 dark:border-ink-700 text-ink-500 dark:text-ink-400">⌘K</span>
+            </label>
+          </div>
+          <div class="px-4 pt-2 pb-4">
+            <button class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-soft transition" onclick="openModal()">
+              <i data-lucide="plus" class="w-4 h-4"></i> New activity
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <div class="px-4 pt-2 pb-2">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Categories</div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span><span class="flex-1">Work</span><span class="mono text-[11px]">14</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="flex-1">Fitness</span><span class="mono text-[11px] text-ink-400">9</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="flex-1">Hobbies</span><span class="mono text-[11px] text-ink-400">11</span></a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span><span class="flex-1">Life Admin</span><span class="mono text-[11px] text-ink-400">7</span></a></li>
+              </ul>
+            </div>
+            <div class="px-4 pt-3 pb-2">
+              <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-1.5">Pinned</div>
+              <ul class="space-y-0.5 text-sm">
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md bg-ink-100/60 dark:bg-ink-900 text-ink-900 dark:text-ink-100 font-medium"><i data-lucide="rocket" class="w-3.5 h-3.5 text-indigo-500"></i> Production Deployment</a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="git-pull-request" class="w-3.5 h-3.5 text-ink-400"></i> Code Review Protocol</a></li>
+                <li><a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-700 dark:text-ink-300"><i data-lucide="users" class="w-3.5 h-3.5 text-ink-400"></i> Onboarding New Engineer</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="border-t border-ink-200 dark:border-ink-800 p-3 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium leading-tight truncate">Mara Bishop</div>
+              <div class="text-[11px] text-ink-500 dark:text-ink-400 truncate"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5c313d2e3d1c2f28293835337228393d31">[email&#160;protected]</a></div>
+            </div>
+            <button class="text-ink-400 hover:text-ink-700 dark:hover:text-ink-200"><i data-lucide="settings" class="w-4 h-4"></i></button>
+          </div>
+        </aside>
+
+        <!-- Main detail -->
+        <div class="h-[1080px] flex flex-col">
+          <div class="h-14 px-6 flex items-center gap-3 border-b border-ink-200 dark:border-ink-800">
+            <div class="flex items-center gap-2 text-sm">
+              <a class="text-ink-500 dark:text-ink-400 hover:text-indigo-600">Home</a>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-ink-400"></i>
+              <a class="text-ink-500 dark:text-ink-400 hover:text-indigo-600">Work</a>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-ink-400"></i>
+              <span class="font-medium truncate">Production Deployment Checklist</span>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <button class="screen-theme-toggle p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900 text-ink-600 dark:text-ink-300">
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:inline-block"></i>
+                <i data-lucide="moon" class="w-4 h-4 inline-block dark:hidden"></i>
+              </button>
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">MB</div>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto sb-scroll">
+            <div class="grid" style="grid-template-columns: 1fr 300px;">
+              <!-- Article body -->
+              <div class="px-10 py-8 max-w-[820px]">
+                <!-- Hero -->
+                <div class="flex items-start gap-5">
+                  <div class="w-14 h-14 rounded-xl gradient-work shrink-0 grid place-items-center shadow-soft">
+                    <i data-lucide="rocket" class="w-6 h-6 text-white"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[12px] mono text-ink-500 dark:text-ink-400 uppercase tracking-wider">Work · Engineering</div>
+                    <h1 class="mt-1 text-[28px] font-semibold tracking-tight leading-tight">Production Deployment Checklist</h1>
+                    <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <span class="tag tag-indigo">#deployment</span>
+                      <span class="tag tag-stone">#release</span>
+                      <span class="tag tag-amber">#weekly</span>
+                      <span class="tag tag-rose">#engineering</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button class="p-2 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900" title="Favorite"><i data-lucide="star" class="w-4 h-4 text-amber-500 fill-amber-500"></i></button>
+                    <button class="p-2 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900" title="Edit" onclick="openModal()"><i data-lucide="pencil" class="w-4 h-4 text-ink-500 dark:text-ink-300"></i></button>
+                    <button class="p-2 rounded-md hover:bg-ink-100 dark:hover:bg-ink-900" title="More"><i data-lucide="more-horizontal" class="w-4 h-4 text-ink-500 dark:text-ink-300"></i></button>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mt-7 prose-sm">
+                  <p class="text-[15px] leading-relaxed text-ink-700 dark:text-ink-300">
+                    Run this before every production push. The big idea: nothing surprises you in prod. We expect a green build, a clean canary, and a rollback we&rsquo;ve actually rehearsed. If any item below isn&rsquo;t green, the release waits.
+                  </p>
+                </div>
+
+                <!-- Two columns: Do's and Don'ts -->
+                <div class="mt-8 grid grid-cols-2 gap-5">
+                  <!-- Do's -->
+                  <div class="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/5 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-500/15 flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-emerald-500 grid place-items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-white"></i></span>
+                      <div class="font-semibold text-emerald-800 dark:text-emerald-300">Do</div>
+                      <span class="ml-auto mono text-[11px] text-emerald-700/70 dark:text-emerald-300/70">7</span>
+                    </div>
+                    <div class="p-2">
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Deploy to canary first; soak for 20 minutes minimum.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Watch the four golden signals dashboard during rollout.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Post a #releases note with the diff link and on-call name.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Run the smoke‑test playbook end‑to‑end after deploy.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Page yourself on critical alerts for the first hour.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Capture and pin the rollback command before merging.</div></div>
+                      <div class="check-row"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 mt-0.5"></i><div class="text-[13.5px]">Update the changelog and bump the user-facing version.</div></div>
+                    </div>
+                  </div>
+                  <!-- Don'ts -->
+                  <div class="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50/60 dark:bg-rose-500/5 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-rose-200/70 dark:border-rose-500/15 flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-md bg-rose-500 grid place-items-center"><i data-lucide="x" class="w-3.5 h-3.5 text-white"></i></span>
+                      <div class="font-semibold text-rose-800 dark:text-rose-300">Don&rsquo;t</div>
+                      <span class="ml-auto mono text-[11px] text-rose-700/70 dark:text-rose-300/70">5</span>
+                    </div>
+                    <div class="p-2">
+                      <div class="check-row"><i data-lucide="x-circle" class="w-4 h-4 text-rose-500 mt-0.5"></i><div class="text-[13.5px]">Don&rsquo;t deploy on Fridays after 2pm. Past Mara has feelings about this.</div></div>
+                      <div class="check-row"><i data-lucide="x-circle" class="w-4 h-4 text-rose-500 mt-0.5"></i><div class="text-[13.5px]">Don&rsquo;t skip the canary, even for &ldquo;tiny&rdquo; config changes.</div></div>
+                      <div class="check-row"><i data-lucide="x-circle" class="w-4 h-4 text-rose-500 mt-0.5"></i><div class="text-[13.5px]">Don&rsquo;t bundle a schema migration with a feature ship.</div></div>
+                      <div class="check-row"><i data-lucide="x-circle" class="w-4 h-4 text-rose-500 mt-0.5"></i><div class="text-[13.5px]">Don&rsquo;t silence alerts to &ldquo;reduce noise&rdquo; mid‑release.</div></div>
+                      <div class="check-row"><i data-lucide="x-circle" class="w-4 h-4 text-rose-500 mt-0.5"></i><div class="text-[13.5px]">Don&rsquo;t merge to main without a paired reviewer awake.</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notes callout -->
+                <div class="mt-8 rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-500/5 p-5 flex gap-4">
+                  <div class="w-9 h-9 rounded-lg bg-indigo-500 grid place-items-center shrink-0"><i data-lucide="lightbulb" class="w-4 h-4 text-white"></i></div>
+                  <div>
+                    <div class="font-semibold text-indigo-900 dark:text-indigo-200">Notes from the last release</div>
+                    <p class="mt-1 text-[14px] leading-relaxed text-indigo-900/80 dark:text-indigo-100/80">
+                      The new index made the canary CPU spike for ~3 minutes before settling. That&rsquo;s expected and not a regression — leave it alone, but note it in the runbook so the next on‑call doesn&rsquo;t panic. Also: the #releases bot is back online, no need to manually post anymore.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Attachments -->
+                <div class="mt-8">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold tracking-tight">Attachments <span class="mono text-[12px] text-ink-500 dark:text-ink-400 font-normal">4</span></h3>
+                    <button class="text-[12.5px] flex items-center gap-1 text-ink-500 dark:text-ink-400 hover:text-indigo-600"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Attach</button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="flex items-center gap-3 p-3 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-indigo-400 transition cursor-pointer">
+                      <div class="w-10 h-10 rounded-md bg-rose-50 dark:bg-rose-500/15 grid place-items-center"><i data-lucide="file-text" class="w-4 h-4 text-rose-500"></i></div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-[13.5px] font-medium truncate">rollback-runbook.pdf</div>
+                        <div class="text-[11.5px] text-ink-500 dark:text-ink-400 mono">PDF · 412 KB</div>
+                      </div>
+                      <i data-lucide="download" class="w-4 h-4 text-ink-400"></i>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-indigo-400 transition cursor-pointer">
+                      <div class="w-10 h-10 rounded-md bg-emerald-50 dark:bg-emerald-500/15 grid place-items-center"><i data-lucide="image" class="w-4 h-4 text-emerald-500"></i></div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-[13.5px] font-medium truncate">canary-dashboard.png</div>
+                        <div class="text-[11.5px] text-ink-500 dark:text-ink-400 mono">PNG · 880 KB</div>
+                      </div>
+                      <i data-lucide="download" class="w-4 h-4 text-ink-400"></i>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-indigo-400 transition cursor-pointer">
+                      <div class="w-10 h-10 rounded-md bg-indigo-50 dark:bg-indigo-500/15 grid place-items-center"><i data-lucide="link" class="w-4 h-4 text-indigo-500"></i></div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-[13.5px] font-medium truncate">grafana.studio.team/d/golden</div>
+                        <div class="text-[11.5px] text-ink-500 dark:text-ink-400 mono">Link · grafana</div>
+                      </div>
+                      <i data-lucide="external-link" class="w-4 h-4 text-ink-400"></i>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-indigo-400 transition cursor-pointer">
+                      <div class="w-10 h-10 rounded-md bg-amber-50 dark:bg-amber-500/15 grid place-items-center"><i data-lucide="file-spreadsheet" class="w-4 h-4 text-amber-500"></i></div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-[13.5px] font-medium truncate">incident-postmortem-q1.xlsx</div>
+                        <div class="text-[11.5px] text-ink-500 dark:text-ink-400 mono">XLSX · 124 KB</div>
+                      </div>
+                      <i data-lucide="download" class="w-4 h-4 text-ink-400"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right rail -->
+              <aside class="border-l border-ink-200 dark:border-ink-800 px-6 py-8 bg-ink-50/40 dark:bg-ink-950/30">
+                <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mb-3">Metadata</div>
+                <dl class="space-y-3 text-[13px]">
+                  <div class="flex justify-between gap-3"><dt class="text-ink-500 dark:text-ink-400">Created</dt><dd class="text-right">Jan 14, 2025</dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-ink-500 dark:text-ink-400">Updated</dt><dd class="text-right">2 days ago</dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-ink-500 dark:text-ink-400">Times viewed</dt><dd class="text-right mono">142</dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-ink-500 dark:text-ink-400">Owner</dt><dd class="text-right">Mara Bishop</dd></div>
+                  <div class="flex justify-between gap-3"><dt class="text-ink-500 dark:text-ink-400">Last used</dt><dd class="text-right">Today, 8:14 AM</dd></div>
+                </dl>
+
+                <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mt-8 mb-3">Use frequency</div>
+                <div class="flex items-end gap-1 h-14">
+                  <div class="flex-1 rounded-sm bg-indigo-200 dark:bg-indigo-500/30" style="height:30%"></div>
+                  <div class="flex-1 rounded-sm bg-indigo-300 dark:bg-indigo-500/40" style="height:55%"></div>
+                  <div class="flex-1 rounded-sm bg-indigo-400 dark:bg-indigo-500/55" style="height:40%"></div>
+                  <div class="flex-1 rounded-sm bg-indigo-300 dark:bg-indigo-500/40" style="height:70%"></div>
+                  <div class="flex-1 rounded-sm bg-indigo-500 dark:bg-indigo-500/70" style="height:85%"></div>
+                  <div class="flex-1 rounded-sm bg-indigo-600 dark:bg-indigo-400" style="height:100%"></div>
+                </div>
+                <div class="flex justify-between mono text-[10px] text-ink-400 mt-1"><span>Dec</span><span>May</span></div>
+
+                <div class="mono text-[10px] uppercase tracking-[0.15em] text-ink-500 dark:text-ink-400 mt-8 mb-3">Related</div>
+                <ul class="space-y-2 text-[13px]">
+                  <li><a class="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-md hover:bg-white dark:hover:bg-ink-900 group">
+                    <span class="w-7 h-7 rounded-md gradient-work grid place-items-center"><i data-lucide="git-pull-request" class="w-3.5 h-3.5 text-white"></i></span>
+                    <span class="flex-1 truncate group-hover:text-indigo-600">Code Review Protocol</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-ink-400"></i>
+                  </a></li>
+                  <li><a class="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-md hover:bg-white dark:hover:bg-ink-900 group">
+                    <span class="w-7 h-7 rounded-md gradient-work grid place-items-center"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-white"></i></span>
+                    <span class="flex-1 truncate group-hover:text-indigo-600">Incident Response Plan</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-ink-400"></i>
+                  </a></li>
+                  <li><a class="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-md hover:bg-white dark:hover:bg-ink-900 group">
+                    <span class="w-7 h-7 rounded-md gradient-work grid place-items-center"><i data-lucide="users" class="w-3.5 h-3.5 text-white"></i></span>
+                    <span class="flex-1 truncate group-hover:text-indigo-600">On‑call Handoff</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-ink-400"></i>
+                  </a></li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 4: ADD/EDIT MODAL ============== -->
+  <section id="screen-4" class="space-y-4 scroll-mt-24">
+    <div class="section-banner rounded-xl px-5 py-3 flex items-center gap-3">
+      <span class="mono text-[11px] px-2 py-0.5 rounded-md bg-indigo-500 text-white">04</span>
+      <h2 class="font-semibold tracking-tight">Add / Edit activity modal</h2>
+      <span class="text-sm text-ink-500 dark:text-ink-400 hidden sm:inline">Centered dialog, ~700px, scrollable. Click any "+ New activity" button to open.</span>
+      <span class="ml-auto mono text-[11px] text-ink-500 dark:text-ink-400">1280 × 820</span>
+    </div>
+
+    <!-- Show modal as a screen with dimmed dashboard backdrop -->
+    <div class="screen-frame relative">
+      <div class="dotgrid h-[820px] relative">
+        <!-- Faint dashboard preview behind -->
+        <div class="absolute inset-0 opacity-50">
+          <div class="grid h-full" style="grid-template-columns: 264px 1fr;">
+            <div class="border-r border-ink-200 dark:border-ink-800 bg-ink-50 dark:bg-ink-950"></div>
+            <div class="p-8">
+              <div class="grid grid-cols-4 gap-4">
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+                <div class="h-44 rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-ink-950/40 dark:bg-ink-950/70 backdrop-blur-[2px]"></div>
+        <!-- Modal -->
+        <div class="absolute inset-0 grid place-items-center p-6">
+          <div class="scale-pop w-full max-w-[700px] rounded-2xl bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-800 shadow-lift overflow-hidden flex flex-col" style="max-height: 740px;">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-ink-100 dark:border-ink-800 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+                <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+              </div>
+              <div>
+                <div class="font-semibold tracking-tight">New activity</div>
+                <div class="text-[12px] text-ink-500 dark:text-ink-400">Capture a playbook you&rsquo;ll come back to.</div>
+              </div>
+              <button class="ml-auto p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-800 text-ink-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-5 overflow-y-auto sb-scroll">
+              <!-- Title -->
+              <div>
+                <input type="text" placeholder="Activity title" value="Pre‑Race Day Routine" class="w-full text-[22px] font-semibold tracking-tight bg-transparent border-0 px-0 placeholder-ink-300 focus:ring-0">
+              </div>
+              <!-- Description -->
+              <div>
+                <label class="block text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">Description</label>
+                <div class="rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950">
+                  <div class="flex items-center gap-1 px-2 py-1.5 border-b border-ink-100 dark:border-ink-800 text-ink-500 dark:text-ink-400">
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="bold" class="w-3.5 h-3.5"></i></button>
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="italic" class="w-3.5 h-3.5"></i></button>
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="list" class="w-3.5 h-3.5"></i></button>
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="link-2" class="w-3.5 h-3.5"></i></button>
+                    <span class="mx-1 w-px h-4 bg-ink-200 dark:bg-ink-800"></span>
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="quote" class="w-3.5 h-3.5"></i></button>
+                    <button class="p-1 rounded hover:bg-ink-100 dark:hover:bg-ink-900"><i data-lucide="code" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                  <textarea rows="3" class="w-full px-3 py-2 text-[14px] bg-transparent border-0 focus:ring-0 resize-none" placeholder="What is this for? When do you reach for it?">The night-before-and-morning-of routine that has me on the start line calm, fed, and not sprinting to the porta-potty.</textarea>
+                </div>
+              </div>
+
+              <!-- Do's / Don'ts -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="flex items-center gap-1.5 text-[12px] font-medium mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Do&rsquo;s
+                  </label>
+                  <textarea rows="5" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[13.5px] focus:ring-0 resize-none" placeholder="One per line">Lay out kit and bib the night before
+Eat dinner by 7pm, simple carbs
+Wake at T‑180min, coffee + banana
+Easy 10‑min jog to wake legs up
+Hit the porta-potty 30 minutes before gun</textarea>
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    <span class="tag tag-emerald">Lay out kit…</span>
+                    <span class="tag tag-emerald">Dinner by 7pm</span>
+                    <span class="tag tag-emerald">+3</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="flex items-center gap-1.5 text-[12px] font-medium mono uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Don&rsquo;ts
+                  </label>
+                  <textarea rows="5" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[13.5px] focus:ring-0 resize-none" placeholder="One per line">Don&apos;t try new gear on race day
+Don&apos;t over‑caffeinate (1 cup max)
+Don&apos;t skip the warm‑up jog
+Don&apos;t check social media past 9pm</textarea>
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    <span class="tag tag-rose">No new gear</span>
+                    <span class="tag tag-rose">Caffeine cap</span>
+                    <span class="tag tag-rose">+2</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div>
+                <label class="block text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">Notes</label>
+                <textarea rows="2" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[13.5px] focus:ring-0 resize-none" placeholder="Anything you want yourself to remember…">If it&rsquo;s under 45°F, layer a throwaway long sleeve. The gear truck closes 20 min before start.</textarea>
+              </div>
+
+              <!-- Tags + Category row -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">Tags</label>
+                  <div class="rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-2 py-1.5 flex items-center flex-wrap gap-1.5 min-h-[42px]">
+                    <span class="tag tag-emerald">#endurance <i data-lucide="x" class="w-3 h-3 ml-1 cursor-pointer"></i></span>
+                    <span class="tag tag-stone">#running <i data-lucide="x" class="w-3 h-3 ml-1 cursor-pointer"></i></span>
+                    <span class="tag tag-amber">#race-day <i data-lucide="x" class="w-3 h-3 ml-1 cursor-pointer"></i></span>
+                    <input type="text" placeholder="Add tag…" class="flex-1 min-w-[80px] bg-transparent border-0 text-[13px] focus:ring-0 px-1">
+                  </div>
+                  <div class="mt-1.5 text-[11.5px] text-ink-500 dark:text-ink-400">Suggestions: <button class="underline-offset-2 hover:underline">#mental</button> · <button class="underline-offset-2 hover:underline">#nutrition</button> · <button class="underline-offset-2 hover:underline">#weekly</button></div>
+                </div>
+                <div>
+                  <label class="block text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">Category</label>
+                  <button class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[14px] flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Fitness
+                    <i data-lucide="chevron-down" class="w-4 h-4 ml-auto text-ink-400"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Attachments dropzone -->
+              <div>
+                <label class="block text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-2">Attachments</label>
+                <div class="rounded-lg border-2 border-dashed border-ink-200 dark:border-ink-800 p-5 flex flex-col items-center text-center gap-1 hover:border-indigo-400 transition cursor-pointer">
+                  <div class="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 grid place-items-center"><i data-lucide="upload-cloud" class="w-4 h-4 text-indigo-500"></i></div>
+                  <div class="text-[13.5px] font-medium">Drop files here, or <span class="text-indigo-600 dark:text-indigo-400">browse</span></div>
+                  <div class="text-[11.5px] mono text-ink-500 dark:text-ink-400">PDF · PNG · JPG · MD · LINK · up to 25 MB</div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2.5">
+                  <div class="flex items-center gap-3 p-2.5 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950">
+                    <div class="w-8 h-8 rounded-md bg-emerald-50 dark:bg-emerald-500/15 grid place-items-center"><i data-lucide="image" class="w-4 h-4 text-emerald-500"></i></div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[12.5px] font-medium truncate">course-elevation.png</div>
+                      <div class="text-[11px] text-ink-500 dark:text-ink-400 mono">PNG · 232 KB</div>
+                    </div>
+                    <button class="p-1 text-ink-400 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                  <div class="flex items-center gap-3 p-2.5 rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950">
+                    <div class="w-8 h-8 rounded-md bg-indigo-50 dark:bg-indigo-500/15 grid place-items-center"><i data-lucide="link" class="w-4 h-4 text-indigo-500"></i></div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[12.5px] font-medium truncate">strava.com/routes/4421</div>
+                      <div class="text-[11px] text-ink-500 dark:text-ink-400 mono">Link · strava</div>
+                    </div>
+                    <button class="p-1 text-ink-400 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-ink-100 dark:border-ink-800 flex items-center gap-3 bg-ink-50/40 dark:bg-ink-950/40">
+              <div class="text-[11.5px] mono text-ink-500 dark:text-ink-400 flex items-center gap-1.5"><i data-lucide="zap" class="w-3 h-3"></i> Auto‑saved 2s ago</div>
+              <button class="ml-auto px-4 py-2 text-sm rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800">Cancel</button>
+              <button class="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-soft flex items-center gap-1.5">Save activity <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN 5: AUTH ============== -->
+  <section id="screen-5" class="space-y-4 scroll-mt-24">
+    <div class="section-banner rounded-xl px-5 py-3 flex items-center gap-3">
+      <span class="mono text-[11px] px-2 py-0.5 rounded-md bg-indigo-500 text-white">05</span>
+      <h2 class="font-semibold tracking-tight">Login / Signup</h2>
+      <span class="text-sm text-ink-500 dark:text-ink-400 hidden sm:inline">Split layout · brand on left · form on right · toggle between Login &harr; Signup</span>
+      <span class="ml-auto mono text-[11px] text-ink-500 dark:text-ink-400">1280 × 760</span>
+    </div>
+
+    <div class="screen-frame">
+      <div class="grid grid-cols-2 h-[760px]">
+        <!-- Left brand panel -->
+        <div class="auth-pattern auth-grid relative p-10 flex flex-col text-white overflow-hidden">
+          <!-- top -->
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-white/95 grid place-items-center">
+              <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
+            </div>
+            <div class="font-semibold tracking-tight">Playbook</div>
+          </div>
+
+          <!-- middle: tagline + visual -->
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="mono text-[11px] uppercase tracking-[0.18em] text-indigo-300/90">Your reusable how‑to</div>
+            <h2 class="mt-3 text-[34px] font-semibold tracking-tight leading-tight">
+              The page you wish<br/>you&rsquo;d had<br/>
+              <span class="text-indigo-300">last time you did this.</span>
+            </h2>
+            <p class="mt-4 max-w-md text-white/70 text-[14px] leading-relaxed">
+              Capture the do&rsquo;s, the don&rsquo;ts, the notes you only learn the hard way. Pull them up the moment you&rsquo;re about to start.
+            </p>
+
+            <!-- mini activity card preview -->
+            <div class="mt-8 max-w-[380px] rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden shadow-lift">
+              <div class="h-20 gradient-fitness flex items-end p-3"><i data-lucide="dumbbell" class="w-5 h-5 text-white/90"></i></div>
+              <div class="p-4">
+                <div class="font-semibold text-[14.5px]">Upper Body Push Day</div>
+                <p class="mt-1 text-[12.5px] text-white/60 line-clamp-2">Bench, OHP, dips, lateral raises. Warm-up flow and rest timing from the last cycle.</p>
+                <div class="mt-3 flex gap-1.5">
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">#upper-body</span>
+                  <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300">#strength</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- bottom strip -->
+          <div class="flex items-center gap-6 text-[12px] text-white/50">
+            <span class="flex items-center gap-1.5"><i data-lucide="shield" class="w-3.5 h-3.5"></i> End‑to‑end encrypted</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="cloud" class="w-3.5 h-3.5"></i> Sync across devices</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="keyboard" class="w-3.5 h-3.5"></i> Keyboard‑first</span>
+          </div>
+        </div>
+
+        <!-- Right form panel -->
+        <div class="px-10 py-10 flex flex-col bg-white dark:bg-ink-900">
+          <!-- Toggle -->
+          <div class="flex items-center justify-end">
+            <div class="inline-flex p-0.5 rounded-lg border border-ink-200 dark:border-ink-800 bg-ink-50 dark:bg-ink-950 mono text-[12px]" id="authToggle">
+              <button data-mode="login" class="px-3 py-1 rounded-md bg-white dark:bg-ink-800 shadow-soft font-medium">Log in</button>
+              <button data-mode="signup" class="px-3 py-1 rounded-md text-ink-500 dark:text-ink-400">Sign up</button>
+            </div>
+          </div>
+
+          <!-- form body -->
+          <div class="flex-1 flex flex-col justify-center max-w-[400px] mx-auto w-full">
+            <h1 id="authTitle" class="text-[28px] font-semibold tracking-tight">Welcome back.</h1>
+            <p id="authSub" class="mt-1.5 text-[14px] text-ink-500 dark:text-ink-400">Log in to your Playbook to pick up where you left off.</p>
+
+            <button class="mt-7 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 text-[14px] font-medium transition">
+              <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.997 10.997 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.49 12c0-.73.13-1.43.35-2.1V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.66-2.83Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.07.56 4.21 1.64l3.15-3.15C17.46 2.07 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z"/></svg>
+              Continue with Google
+            </button>
+
+            <div class="my-6 flex items-center gap-3">
+              <div class="flex-1 h-px bg-ink-200 dark:bg-ink-800"></div>
+              <span class="mono text-[10px] uppercase tracking-wider text-ink-400">or</span>
+              <div class="flex-1 h-px bg-ink-200 dark:bg-ink-800"></div>
+            </div>
+
+            <form class="space-y-4">
+              <div id="nameField" class="hidden">
+                <label class="text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400">Full name</label>
+                <input type="text" placeholder="Mara Bishop" class="mt-1.5 w-full px-3 py-2.5 rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-950 text-[14px]">
+              </div>
+              <div>
+                <label class="text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400">Email</label>
+                <input type="email" placeholder="you@studio.team" value="mara@studio.team" class="mt-1.5 w-full px-3 py-2.5 rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-950 text-[14px]">
+              </div>
+              <div>
+                <div class="flex items-center justify-between">
+                  <label class="text-[12px] font-medium mono uppercase tracking-wider text-ink-500 dark:text-ink-400">Password</label>
+                  <button type="button" id="forgotLink" class="text-[12px] text-indigo-600 dark:text-indigo-400 hover:underline underline-offset-2">Forgot password?</button>
+                </div>
+                <input type="password" placeholder="••••••••" value="••••••••••••" class="mt-1.5 w-full px-3 py-2.5 rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-950 text-[14px]">
+              </div>
+              <button type="button" id="authSubmit" class="w-full px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[14px] shadow-soft flex items-center justify-center gap-1.5">
+                Continue <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </form>
+
+            <p id="authFootnote" class="mt-6 text-center text-[12.5px] text-ink-500 dark:text-ink-400">
+              New here? <button class="text-indigo-600 dark:text-indigo-400 hover:underline">Create an account →</button>
+            </p>
+          </div>
+
+          <div class="text-center mono text-[10.5px] text-ink-400">
+            By continuing you agree to the Terms &amp; Privacy.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FOOTER NOTES ============== -->
+  <section class="grid md:grid-cols-3 gap-4 pt-4">
+    <div class="rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-5">
+      <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Interactions live in this file</div>
+      <ul class="mt-3 space-y-2 text-[13.5px] text-ink-700 dark:text-ink-300">
+        <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 text-emerald-500"></i> Theme toggle in the page header switches every screen</li>
+        <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 text-emerald-500"></i> Filter chips dismiss on click, "Clear all" wipes them</li>
+        <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 text-emerald-500"></i> "+ New activity" buttons open the modal with fade + scale</li>
+        <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 text-emerald-500"></i> Auth toggle flips Login &harr; Signup with field reveal</li>
+        <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 mt-0.5 text-emerald-500"></i> Tag chips highlight when "active"; cards lift on hover</li>
+      </ul>
+    </div>
+    <div class="rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-5">
+      <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Responsive</div>
+      <ul class="mt-3 space-y-2 text-[13.5px] text-ink-700 dark:text-ink-300">
+        <li class="flex items-start gap-2"><i data-lucide="monitor" class="w-4 h-4 mt-0.5 text-ink-400"></i> ≥1280: full sidebar + 4‑col grid</li>
+        <li class="flex items-start gap-2"><i data-lucide="laptop" class="w-4 h-4 mt-0.5 text-ink-400"></i> 1024–1279: 3‑col grid</li>
+        <li class="flex items-start gap-2"><i data-lucide="tablet" class="w-4 h-4 mt-0.5 text-ink-400"></i> 768–1023: icon‑only sidebar + 2‑col</li>
+        <li class="flex items-start gap-2"><i data-lucide="smartphone" class="w-4 h-4 mt-0.5 text-ink-400"></i> &lt;768: drawer + 1‑col + near‑full‑screen modal</li>
+      </ul>
+    </div>
+    <div class="rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-5">
+      <div class="mono text-[11px] uppercase tracking-wider text-ink-500 dark:text-ink-400">Sample data is real</div>
+      <ul class="mt-3 space-y-2 text-[13.5px] text-ink-700 dark:text-ink-300">
+        <li>• Production Deployment Checklist · Code Review Protocol · Onboarding</li>
+        <li>• Upper Body Push · Long Run Training</li>
+        <li>• Sourdough Starter · Espresso Cleaning · Garden Bed Spring</li>
+        <li>• Travel Prep · Quarterly Taxes · Weekly Meal Prep</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // === Theme toggle ===
+  const root = document.documentElement;
+  function applyTheme(t){
+    if(t === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+    try { localStorage.setItem('pb-theme', t); } catch(e){}
+    // re-render lucide icons after class swap is fine; classes drive visibility
+  }
+  function toggleTheme(){
+    const next = root.classList.contains('dark') ? 'light' : 'dark';
+    applyTheme(next);
+  }
+  try {
+    const saved = localStorage.getItem('pb-theme');
+    if (saved) applyTheme(saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
+  } catch(e){}
+
+  document.getElementById('globalThemeToggle').addEventListener('click', toggleTheme);
+  document.querySelectorAll('.screen-theme-toggle').forEach(b => b.addEventListener('click', toggleTheme));
+
+  // === Filter chips ===
+  document.querySelectorAll('#filterChipsRow .filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.style.transition = 'opacity .2s, transform .2s';
+      chip.style.opacity = '0';
+      chip.style.transform = 'scale(.9)';
+      setTimeout(() => chip.remove(), 180);
+    });
+  });
+  document.getElementById('clearFiltersBtn')?.addEventListener('click', () => {
+    document.querySelectorAll('#filterChipsRow .filter-chip').forEach(c => c.remove());
+  });
+
+  // === Tag cloud (sidebar) ===
+  document.querySelectorAll('#tagFilterCloud button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('ring-2');
+      btn.classList.toggle('ring-indigo-400/60');
+    });
+  });
+
+  // === Modal: add a real overlay modal that opens from any "New activity" button ===
+  function openModal(){
+    if (document.getElementById('liveModal')) return;
+    const wrap = document.createElement('div');
+    wrap.id = 'liveModal';
+    wrap.className = 'fade-in fixed inset-0 z-[60] grid place-items-center p-6 bg-ink-950/50 backdrop-blur-sm';
+    wrap.innerHTML = `
+      <div class="scale-pop w-full max-w-[700px] rounded-2xl bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-800 shadow-lift overflow-hidden flex flex-col" style="max-height: min(90vh, 740px);">
+        <div class="px-6 py-4 border-b border-ink-100 dark:border-ink-800 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 grid place-items-center shadow-soft">
+            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+          </div>
+          <div>
+            <div class="font-semibold tracking-tight">New activity</div>
+            <div class="text-[12px] text-ink-500 dark:text-ink-400">Capture a playbook you'll come back to.</div>
+          </div>
+          <button id="liveModalClose" class="ml-auto p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-ink-800 text-ink-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-5 overflow-y-auto sb-scroll">
+          <input type="text" placeholder="Activity title" class="w-full text-[22px] font-semibold tracking-tight bg-transparent border-0 px-0 placeholder-ink-300 focus:ring-0">
+          <textarea rows="3" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[14px] focus:ring-0 resize-none" placeholder="What is this for? When do you reach for it?"></textarea>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="flex items-center gap-1.5 text-[12px] font-medium mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2"><i data-lucide="check" class="w-3.5 h-3.5"></i> Do's</label>
+              <textarea rows="4" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[13.5px] focus:ring-0 resize-none" placeholder="One per line"></textarea>
+            </div>
+            <div>
+              <label class="flex items-center gap-1.5 text-[12px] font-medium mono uppercase tracking-wider text-rose-700 dark:text-rose-400 mb-2"><i data-lucide="x" class="w-3.5 h-3.5"></i> Don'ts</label>
+              <textarea rows="4" class="w-full rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-3 py-2 text-[13.5px] focus:ring-0 resize-none" placeholder="One per line"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-ink-100 dark:border-ink-800 flex items-center gap-3 bg-ink-50/40 dark:bg-ink-950/40">
+          <button id="liveModalCancel" class="ml-auto px-4 py-2 text-sm rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800">Cancel</button>
+          <button class="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-soft flex items-center gap-1.5">Save activity <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    lucide.createIcons();
+    const close = () => wrap.remove();
+    wrap.addEventListener('click', e => { if (e.target === wrap) close(); });
+    document.getElementById('liveModalClose').addEventListener('click', close);
+    document.getElementById('liveModalCancel').addEventListener('click', close);
+    document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); } });
+  }
+  window.openModal = openModal;
+
+  // === Auth login/signup toggle ===
+  const authToggle = document.getElementById('authToggle');
+  const authTitle = document.getElementById('authTitle');
+  const authSub = document.getElementById('authSub');
+  const authFootnote = document.getElementById('authFootnote');
+  const nameField = document.getElementById('nameField');
+  function setAuthMode(mode){
+    authToggle.querySelectorAll('button').forEach(b => {
+      const active = b.dataset.mode === mode;
+      b.className = active
+        ? 'px-3 py-1 rounded-md bg-white dark:bg-ink-800 shadow-soft font-medium'
+        : 'px-3 py-1 rounded-md text-ink-500 dark:text-ink-400';
+    });
+    if (mode === 'signup') {
+      authTitle.textContent = 'Create your Playbook.';
+      authSub.textContent = 'Start collecting your reusable how‑to. Free to try, sync across devices.';
+      nameField.classList.remove('hidden');
+      authFootnote.innerHTML = 'Already have one? <button class="text-indigo-600 dark:text-indigo-400 hover:underline">Log in instead →</button>';
+    } else {
+      authTitle.textContent = 'Welcome back.';
+      authSub.textContent = 'Log in to your Playbook to pick up where you left off.';
+      nameField.classList.add('hidden');
+      authFootnote.innerHTML = 'New here? <button class="text-indigo-600 dark:text-indigo-400 hover:underline">Create an account →</button>';
+    }
+  }
+  authToggle.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setAuthMode(b.dataset.mode)));
+  // Allow toggling from the footnote link too
+  document.getElementById('authFootnote').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const isLoginNow = !nameField.classList.contains('hidden');
+    setAuthMode(isLoginNow ? 'login' : 'signup');
+  });
+
+  // === Lucide icons render ===
+  lucide.createIcons();
+</script>
+
+</body>
+</html>
