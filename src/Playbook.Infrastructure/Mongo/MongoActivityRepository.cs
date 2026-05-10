@@ -133,6 +133,21 @@ public sealed class MongoActivityRepository(IMongoDatabase db) : IActivityReposi
         return results.Select(d => new TagBucket(d["_id"].AsString, d["count"].AsInt32)).ToList();
     }
 
+    public async Task<IReadOnlyList<Activity>> GetStaleActivitiesAsync(ObjectId userId, int staleDays, int limit, CancellationToken ct)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-staleDays);
+        var filter = Builders<Activity>.Filter.And(
+            Builders<Activity>.Filter.Eq(a => a.UserId, userId),
+            Builders<Activity>.Filter.Eq(a => a.IsArchived, false),
+            Builders<Activity>.Filter.Or(
+                Builders<Activity>.Filter.Lt(a => a.LastViewedAt, cutoff),
+                Builders<Activity>.Filter.Eq(a => a.LastViewedAt, null as DateTime?)));
+        return await _col.Find(filter)
+            .SortBy(a => a.LastViewedAt)
+            .Limit(limit)
+            .ToListAsync(ct);
+    }
+
     // ---- Helpers ----
 
     private static FilterDefinition<Activity> BuildBaseFilter(ObjectId userId, ActivityFilter filter)

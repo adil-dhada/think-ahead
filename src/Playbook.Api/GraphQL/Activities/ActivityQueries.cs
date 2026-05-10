@@ -95,12 +95,32 @@ public sealed class ActivityQueries
     }
 
     [Authorize]
+    public async Task<List<ActivityNode>> StaleActivitiesAsync(
+        [Service] IActivityRepository activityRepo,
+        [Service] ICategoryRepository categoryRepo,
+        [Service] ICurrentUser currentUser,
+        [Service] IBlobStore blobs,
+        int staleDays = 30,
+        int limit = 6,
+        CancellationToken ct = default)
+    {
+        var userId = currentUser.RequireUserId();
+        var items = await activityRepo.GetStaleActivitiesAsync(userId, staleDays, limit, ct);
+        var catMap = await BuildCategoryMapAsync(categoryRepo, currentUser, items.Select(a => a.CategoryId), ct);
+        return items.Select(a => ActivityMapper.ToNode(a, catMap, att => Sas(blobs, att, ct))).ToList();
+    }
+
+    [Authorize]
     public async Task<DashboardStatsNode> DashboardAsync(
         [Service] GetDashboardHandler handler,
+        [Service] IActivityRepository activityRepo,
+        [Service] ICurrentUser currentUser,
         CancellationToken ct = default)
     {
         var stats = await handler.Handle(ct);
-        return new DashboardStatsNode(stats.TotalActivities, stats.TotalCategories, stats.TotalTags, stats.ArchivedCount, stats.FavoritesCount);
+        var userId = currentUser.RequireUserId();
+        var staleCount = (await activityRepo.GetStaleActivitiesAsync(userId, 30, int.MaxValue, ct)).Count;
+        return new DashboardStatsNode(stats.TotalActivities, stats.TotalCategories, stats.TotalTags, stats.ArchivedCount, stats.FavoritesCount, staleCount);
     }
 
     private static string Sas(IBlobStore blobs, Domain.Activities.AttachmentRef att, CancellationToken ct) =>

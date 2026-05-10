@@ -6,20 +6,23 @@ import { map } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { ActivityCardComponent } from '../activities/activity-card.component';
-import { Activity } from '../activities/activities.store';
+import { Activity, STALE_ACTIVITIES } from '../activities/activities.store';
+
+const ACTIVITY_INLINE = `id title updatedAt createdAt lastViewedAt viewCount isStale category { id name color } tags isFavorite isArchived dos donts description notes attachments { blobPath fileName contentType sizeBytes downloadUrl }`;
 
 const DASHBOARD_Q = gql`
   query Dashboard {
-    dashboard { totalActivities totalCategories totalTags favoritesCount }
-    recentlyViewed(limit: 5) { id title updatedAt createdAt lastViewedAt viewCount category { id name color } tags isFavorite isArchived dos donts description notes attachments { blobPath fileName contentType sizeBytes downloadUrl } }
-    favorites(limit: 3) { id title updatedAt createdAt lastViewedAt viewCount category { id name color } tags isFavorite isArchived dos donts description notes attachments { blobPath fileName contentType sizeBytes downloadUrl } }
+    dashboard { totalActivities totalCategories totalTags favoritesCount staleCount }
+    recentlyViewed(limit: 5) { ${ACTIVITY_INLINE} }
+    favorites(limit: 3) { ${ACTIVITY_INLINE} }
     activities(first: 4, sort: UPDATED_DESC) {
-      nodes { id title updatedAt createdAt lastViewedAt viewCount category { id name color } tags isFavorite isArchived dos donts description notes attachments { blobPath fileName contentType sizeBytes downloadUrl } }
+      nodes { ${ACTIVITY_INLINE} }
     }
+    staleActivities(limit: 6) { ${ACTIVITY_INLINE} }
   }
 `;
 
-interface DashboardStats { totalActivities: number; totalCategories: number; totalTags: number; favoritesCount: number; }
+interface DashboardStats { totalActivities: number; totalCategories: number; totalTags: number; favoritesCount: number; staleCount: number; }
 
 const COLOR_GRADIENT: Record<string, string> = {
   INDIGO: 'gradient-indigo', EMERALD: 'gradient-emerald', AMBER: 'gradient-amber',
@@ -101,6 +104,34 @@ const COLOR_GRADIENT: Record<string, string> = {
     </div>
   }
 
+  <!-- Needs Review -->
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold tracking-tight flex items-center gap-2">
+        <lucide-icon name="alert-triangle" class="w-4 h-4 text-amber-500"></lucide-icon>
+        Needs Review
+        @if (stale().length) {
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">{{stats()?.staleCount ?? stale().length}}</span>
+        }
+      </h3>
+      @if (stale().length) {
+        <a routerLink="/activities" class="text-[13px] text-ink-500 dark:text-ink-400 hover:text-indigo-600">View all →</a>
+      }
+    </div>
+    @if (stale().length) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (a of stale(); track a.id) {
+          <app-activity-card [activity]="a" />
+        }
+      </div>
+    } @else if (!loading()) {
+      <div class="flex items-center gap-3 px-4 py-4 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-900/10 text-sm text-emerald-700 dark:text-emerald-400">
+        <lucide-icon name="check-circle-2" class="w-4 h-4 shrink-0"></lucide-icon>
+        All caught up! No activities need review.
+      </div>
+    }
+  </div>
+
   <!-- All activities preview -->
   @if (all().length) {
     <div>
@@ -143,6 +174,7 @@ export class DashboardPage {
       recentlyViewed: Activity[];
       favorites: Activity[];
       activities: { nodes: Activity[] };
+      staleActivities: Activity[];
     }>({ query: DASHBOARD_Q }).valueChanges.pipe(map(r => r.data!)),
     { initialValue: null }
   );
@@ -152,6 +184,7 @@ export class DashboardPage {
   protected readonly recent  = () => (this._data()?.recentlyViewed ?? []) as Activity[];
   protected readonly favs    = () => (this._data()?.favorites ?? []) as Activity[];
   protected readonly all     = () => (this._data()?.activities?.nodes ?? []) as Activity[];
+  protected readonly stale   = () => (this._data()?.staleActivities ?? []) as Activity[];
 
   protected readonly today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 

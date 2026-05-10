@@ -20,6 +20,7 @@ export interface Activity {
   attachments: Attachment[];
   isFavorite: boolean;
   isArchived: boolean;
+  isStale: boolean;
   viewCount: number;
   lastViewedAt: string | null;
   runCount: number;
@@ -38,7 +39,7 @@ export interface ActivityFilter {
 }
 
 const ACTIVITY_FIELDS = `
-  id title isFavorite isArchived viewCount updatedAt createdAt lastViewedAt
+  id title isFavorite isArchived isStale viewCount updatedAt createdAt lastViewedAt
   runCount lastRunAt runs { executedAt outcomeNote }
   tags dos donts
   category { id name color }
@@ -94,7 +95,11 @@ export const ARCHIVE_ACTIVITY = gql`
 `;
 
 export const RECORD_VIEW = gql`
-  mutation RecordView($id: String!) { recordView(id: $id) { id viewCount lastViewedAt } }
+  mutation RecordView($id: String!) { recordView(id: $id) { id viewCount lastViewedAt isStale } }
+`;
+
+export const STALE_ACTIVITIES = gql`
+  query StaleActivities($limit: Int) { staleActivities(limit: $limit) { ${ACTIVITY_FIELDS} } }
 `;
 
 export const ATTACH_FILE = gql`
