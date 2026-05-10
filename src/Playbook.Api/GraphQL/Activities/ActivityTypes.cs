@@ -26,6 +26,7 @@ public sealed record ActivityNode(
     List<AttachmentNode> Attachments,
     bool IsFavorite,
     bool IsArchived,
+    bool IsStale,
     int ViewCount,
     DateTime? LastViewedAt,
     DateTime CreatedAt,
@@ -44,7 +45,8 @@ public sealed record DashboardStatsNode(
     int TotalCategories,
     int TotalTags,
     int ArchivedCount,
-    int FavoritesCount);
+    int FavoritesCount,
+    int StaleCount);
 
 public sealed record PageInfoNode(string? EndCursor, bool HasNextPage);
 
@@ -54,6 +56,8 @@ public sealed record ActivityConnectionNode(
 
 public static class ActivityMapper
 {
+    private static readonly TimeSpan StalenessThreshold = TimeSpan.FromDays(30);
+
     public static ActivityNode ToNode(
         Activity a,
         IReadOnlyDictionary<ObjectId, Category>? categoryMap,
@@ -62,6 +66,7 @@ public static class ActivityMapper
         Category? cat = a.CategoryId.HasValue && categoryMap is not null
             ? categoryMap.GetValueOrDefault(a.CategoryId.Value)
             : null;
+        var isStale = a.LastViewedAt is null || (DateTime.UtcNow - a.LastViewedAt.Value) > StalenessThreshold;
         return new(
             a.Id.ToString(),
             a.UserId.ToString(),
@@ -77,6 +82,7 @@ public static class ActivityMapper
                 sasResolver(att))).ToList(),
             a.IsFavorite,
             a.IsArchived,
+            isStale,
             a.ViewCount,
             a.LastViewedAt,
             a.CreatedAt,

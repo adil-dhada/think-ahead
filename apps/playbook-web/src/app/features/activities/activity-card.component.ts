@@ -21,10 +21,15 @@ const TAG_PALETTE = ['indigo','emerald','amber','rose','sky','violet','stone'];
 <article class="activity-card rounded-xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-900 overflow-hidden flex flex-col">
 
   <!-- Color banner -->
-  <div class="h-24 {{gradientClass}} flex items-start justify-between p-3">
+  <div class="h-24 {{gradientClass}} flex items-start justify-between p-3 relative">
     <div class="w-8 h-8 rounded-lg bg-white/20 grid place-items-center">
       <span class="text-white font-semibold text-[11px]">{{initials}}</span>
     </div>
+    @if (activity.isStale) {
+      <span class="absolute bottom-2 left-3 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/90 text-white">
+        Needs review
+      </span>
+    }
     <button (click)="onFavorite($event)" class="text-white/80 hover:text-white transition">
       <lucide-icon name="star" [class]="activity.isFavorite ? 'w-4 h-4 fill-white text-white' : 'w-4 h-4'"></lucide-icon>
     </button>

@@ -19,6 +19,7 @@ public interface IActivityRepository
     Task<IReadOnlyDictionary<ObjectId, int>> CountByCategoryAsync(ObjectId userId, IReadOnlyCollection<ObjectId> categoryIds, CancellationToken ct);
     Task<DashboardCounts> GetDashboardCountsAsync(ObjectId userId, CancellationToken ct);
     Task<IReadOnlyList<TagBucket>> GetTagBucketsAsync(ObjectId userId, CancellationToken ct);
+    Task<IReadOnlyList<Activity>> GetStaleActivitiesAsync(ObjectId userId, int staleDays, int limit, CancellationToken ct);
 }
 
 public sealed record DashboardCounts(int Total, int Archived, int Favorites, int DistinctTags);
