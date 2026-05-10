@@ -6,6 +6,8 @@ import { map, startWith } from 'rxjs';
 export interface Category { id: string; name: string; color: string; }
 export interface Attachment { blobPath: string; fileName: string; contentType: string; sizeBytes: number; downloadUrl: string; }
 
+export interface ActivityRun { executedAt: string; outcomeNote?: string | null; }
+
 export interface Activity {
   id: string;
   title: string;
@@ -20,6 +22,9 @@ export interface Activity {
   isArchived: boolean;
   viewCount: number;
   lastViewedAt: string | null;
+  runCount: number;
+  lastRunAt: string | null;
+  runs: ActivityRun[];
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +39,7 @@ export interface ActivityFilter {
 
 const ACTIVITY_FIELDS = `
   id title isFavorite isArchived viewCount updatedAt createdAt lastViewedAt
+  runCount lastRunAt runs { executedAt outcomeNote }
   tags dos donts
   category { id name color }
   attachments { blobPath fileName contentType sizeBytes downloadUrl }
@@ -100,6 +106,12 @@ export const ATTACH_FILE = gql`
 export const DETACH_FILE = gql`
   mutation DetachFile($activityId: String!, $blobPath: String!) {
     detachFromActivity(activityId: $activityId, blobPath: $blobPath) { id attachments { blobPath fileName contentType sizeBytes downloadUrl } }
+  }
+`;
+
+export const RECORD_RUN = gql`
+  mutation RecordRun($id: String!, $outcomeNote: String) {
+    recordRun(id: $id, outcomeNote: $outcomeNote) { id runCount lastRunAt runs { executedAt outcomeNote } }
   }
 `;
 

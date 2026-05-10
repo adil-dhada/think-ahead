@@ -35,6 +35,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/activities/activity-edit.modal').then(m => m.ActivityEditModal)
       },
       {
+        path: 'activities/:id/run',
+        loadComponent: () => import('./features/activities/activity-run.modal').then(m => m.ActivityRunModal)
+      },
+      {
         path: 'activities/:id',
         loadComponent: () => import('./features/activities/activity-detail.page').then(m => m.ActivityDetailPage)
       },

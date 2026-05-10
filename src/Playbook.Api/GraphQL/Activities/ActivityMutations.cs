@@ -4,6 +4,7 @@ using MongoDB.Bson;
 using Playbook.Application.Activities;
 using Playbook.Application.Categories;
 using Playbook.Application.Common.Abstractions;
+using Playbook.Domain.Activities;
 using Playbook.Domain.Categories;
 
 namespace Playbook.Api.GraphQL.Activities;
@@ -93,6 +94,21 @@ public sealed class ActivityMutations
         [Service] IBlobStore blobs, CancellationToken ct)
     {
         var activity = await handler.Handle(id, ct);
+        var catMap = await SingleCatMap(categoryRepo, currentUser, activity.CategoryId, ct);
+        return ActivityMapper.ToNode(activity, catMap, att => Sas(blobs, att, ct));
+    }
+
+    [Authorize]
+    public async Task<ActivityNode> RecordRunAsync(
+        string id,
+        string? outcomeNote,
+        [Service] RecordRunHandler handler,
+        [Service] ICategoryRepository categoryRepo,
+        [Service] ICurrentUser currentUser,
+        [Service] IBlobStore blobs,
+        CancellationToken ct)
+    {
+        var activity = await handler.Handle(new RecordRunCommand(id, outcomeNote), ct);
         var catMap = await SingleCatMap(categoryRepo, currentUser, activity.CategoryId, ct);
         return ActivityMapper.ToNode(activity, catMap, att => Sas(blobs, att, ct));
     }

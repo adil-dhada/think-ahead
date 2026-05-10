@@ -100,6 +100,7 @@ builder.Services.AddScoped<DeleteActivityHandler>();
 builder.Services.AddScoped<ArchiveActivityHandler>();
 builder.Services.AddScoped<ToggleFavoriteHandler>();
 builder.Services.AddScoped<RecordViewHandler>();
+builder.Services.AddScoped<RecordRunHandler>();
 builder.Services.AddScoped<PinActivityHandler>();
 builder.Services.AddScoped<UnpinActivityHandler>();
 builder.Services.AddScoped<AttachToActivityHandler>();

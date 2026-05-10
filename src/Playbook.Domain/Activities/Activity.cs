@@ -32,6 +32,9 @@ public sealed class Activity
     public bool IsArchived { get; set; }
     public int ViewCount { get; set; }
     public DateTime? LastViewedAt { get; set; }
+    public List<ActivityRun> Runs { get; set; } = [];
+    public int RunCount => Runs.Count;
+    public DateTime? LastRunAt => Runs.Count > 0 ? Runs[^1].ExecutedAt : null;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public int SchemaVersion { get; set; } = 1;
@@ -101,6 +104,12 @@ public sealed class Activity
         LastViewedAt = nowUtc;
     }
 
+    public void RecordRun(string? outcomeNote, DateTime nowUtc)
+    {
+        Runs.Add(new ActivityRun { ExecutedAt = nowUtc, OutcomeNote = outcomeNote });
+        UpdatedAt = nowUtc;
+    }
+
     public void AttachFile(AttachmentRef attachment, DateTime nowUtc)
     {
         if (Attachments.Count >= MaxAttachments)
@@ -155,4 +164,10 @@ public sealed class Activity
         if (list.Any(i => i.Length > MaxItemLength)) throw new DomainValidationException($"{field} items cannot exceed {MaxItemLength} characters.");
         return list;
     }
+}
+
+public sealed class ActivityRun
+{
+    public DateTime ExecutedAt { get; set; }
+    public string? OutcomeNote { get; set; }
 }
