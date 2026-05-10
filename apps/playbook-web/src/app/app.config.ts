@@ -10,7 +10,7 @@ import {
   Home, LayoutDashboard, ChevronDown, ChevronUp, ChevronLeft,
   Eye, EyeOff, AlertCircle, SlidersHorizontal, X,
   Pencil, Trash2, Upload, Paperclip, FileText, Rocket,
-  CheckCircle2, Info, AlertTriangle
+  CheckCircle2, Info, AlertTriangle, ArrowUp, ArrowDown, CornerDownLeft
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -47,7 +47,7 @@ export const appConfig: ApplicationConfig = {
       Home, LayoutDashboard, ChevronDown, ChevronUp, ChevronLeft,
       Eye, EyeOff, AlertCircle, SlidersHorizontal, X,
       Pencil, Trash2, Upload, Paperclip, FileText, Rocket,
-      CheckCircle2, Info, AlertTriangle
+      CheckCircle2, Info, AlertTriangle, ArrowUp, ArrowDown, CornerDownLeft
     })),
     {
       provide: APP_INITIALIZER,

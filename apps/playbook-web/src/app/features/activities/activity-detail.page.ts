@@ -36,6 +36,10 @@ const COLOR_DOT: Record<string,string> = {
           [title]="activity()!.isArchived ? 'Unarchive' : 'Archive'">
           <lucide-icon name="archive" class="w-4 h-4 text-ink-400"></lucide-icon>
         </button>
+        <a [routerLink]="['/activities', activity()!.id, 'run']"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition">
+          <lucide-icon name="rocket" class="w-3.5 h-3.5"></lucide-icon> Run
+        </a>
         <a [routerLink]="['/activities', activity()!.id, 'edit']"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ink-200 dark:border-ink-800 text-sm hover:bg-ink-100 dark:hover:bg-ink-900 transition">
           <lucide-icon name="pencil" class="w-3.5 h-3.5"></lucide-icon> Edit
@@ -148,6 +152,21 @@ const COLOR_DOT: Record<string,string> = {
               {{a.viewCount}}
             </span>
           </div>
+          @if (a.runCount > 0) {
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-ink-500 dark:text-ink-400">Runs</span>
+              <span class="flex items-center gap-1.5 font-mono text-xs">
+                <lucide-icon name="rocket" class="w-3.5 h-3.5 text-ink-400"></lucide-icon>
+                {{a.runCount}}
+              </span>
+            </div>
+            @if (a.lastRunAt) {
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-ink-500 dark:text-ink-400">Last run</span>
+                <span class="font-mono text-xs">{{formatDate(a.lastRunAt)}}</span>
+              </div>
+            }
+          }
           <div class="flex items-center justify-between text-sm">
             <span class="text-ink-500 dark:text-ink-400">Updated</span>
             <span class="font-mono text-xs">{{formatDate(a.updatedAt)}}</span>

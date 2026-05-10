@@ -5,6 +5,8 @@ using Playbook.Domain.Categories;
 
 namespace Playbook.Api.GraphQL.Activities;
 
+public sealed record ActivityRunNode(string ExecutedAt, string? OutcomeNote);
+
 public sealed record AttachmentNode(
     string BlobPath,
     string FileName,
@@ -30,7 +32,10 @@ public sealed record ActivityNode(
     int ViewCount,
     DateTime? LastViewedAt,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    int RunCount,
+    DateTime? LastRunAt,
+    List<ActivityRunNode> Runs);
 
 public sealed record CategoryNode(
     string Id,
@@ -86,7 +91,10 @@ public static class ActivityMapper
             a.ViewCount,
             a.LastViewedAt,
             a.CreatedAt,
-            a.UpdatedAt);
+            a.UpdatedAt,
+            a.RunCount,
+            a.LastRunAt,
+            a.Runs.Select(r => new ActivityRunNode(r.ExecutedAt.ToString("O"), r.OutcomeNote)).ToList());
     }
 
     public static ActivityConnectionNode ToConnection(
