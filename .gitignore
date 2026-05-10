@@ -87,3 +87,9 @@ docker-compose.override.yml
 
 # Claude Code local settings
 .claude/
+
+# Playwright test artifacts
+.playwright-mcp/
+*.png
+*.jpeg
+bash.exe.stackdump
